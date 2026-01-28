@@ -4,8 +4,6 @@ on:
   workflow_dispatch:
   repository_dispatch:
     types: [otto-release]
-  release:
-    types: [published]
 
 permissions:
   contents: write
@@ -30,28 +28,33 @@ jobs:
           fi
 
           echo "Downloading otto.rb from release $TAG"
-          gh release download "$TAG" --repo kusold/otto --pattern "otto.rb" --output otto.rb
+          gh release download "$TAG" --repo kusold/otto --pattern "otto.rb" --output new-otto.rb
 
       - name: Checkout
         uses: actions/checkout@v4
 
       - name: Commit and push
         run: |
-          if [ -f otto.rb ]; then
-            # Copy the downloaded formula
-            cp otto.rb otto.rb
+          if [ -f new-otto.rb ]; then
+            # Move the new formula in place
+            mv new-otto.rb otto.rb
 
             # Set up git
             git config user.name "github-actions[bot]"
             git config user.email "github-actions[bot]@users.noreply.github.com"
 
-            # Add and commit
-            git add otto.rb
-            TAG="${{ github.event.release.tag_name || github.event.client_payload.tag }}"
-            git commit -m "Update otto to ${TAG}"
+            # Check if there are changes
+            if git diff --quiet otto.rb; then
+              echo "No changes to otto.rb, skipping commit"
+            else
+              # Add and commit
+              git add otto.rb
+              TAG="${{ github.event.release.tag_name || github.event.client_payload.tag }}"
+              git commit -m "Update otto to ${TAG}"
 
-            # Push
-            git push
+              # Push
+              git push
+            fi
           else
             echo "Error: otto.rb not found"
             exit 1
