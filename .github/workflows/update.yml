@@ -12,6 +12,9 @@ jobs:
   update-formula:
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
       - name: Download formula from release
         env:
           GH_TOKEN: ${{ github.token }}
@@ -29,9 +32,6 @@ jobs:
 
           echo "Downloading otto.rb from release $TAG"
           gh release download "$TAG" --repo kusold/otto --pattern "otto.rb" --output new-otto.rb
-
-      - name: Checkout
-        uses: actions/checkout@v4
 
       - name: Commit and push
         run: |
@@ -56,6 +56,6 @@ jobs:
               git push
             fi
           else
-            echo "Error: otto.rb not found"
+            echo "Error: new-otto.rb not found after download"
             exit 1
           fi
